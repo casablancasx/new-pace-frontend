@@ -43,10 +43,7 @@ const navItems: NavItem[] = [
   {
     icon: <UserIcon />,
     name: "Avaliador",
-    subItems: [
-      { name: "Gerenciar Avaliadores", path: "/avaliador", pro: false },
-      { name: "Cadastrar Avaliador", path: "/cadastrar-avaliador", pro: false },
-    ],
+    path: "/avaliador",
   },
   {
     icon: <UserCircleIcon />,
