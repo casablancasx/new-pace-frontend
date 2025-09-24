@@ -24,6 +24,7 @@ const Avaliador = () => {
     nome: '',
     email: '',
     telefone: '',
+    status: 'Ativo' as 'Ativo' | 'Inativo',
   });
   const [avaliadores, setAvaliadores] = useState<Avaliador[]>([
     { 
@@ -92,6 +93,7 @@ const Avaliador = () => {
       nome: avaliador.nome,
       email: avaliador.email,
       telefone: avaliador.telefone,
+      status: avaliador.status,
     });
     openEditModal();
   };
@@ -103,7 +105,7 @@ const Avaliador = () => {
     // Simulando uma edição no estado local
     const updatedAvaliadores = avaliadores.map((av) => 
       av.id === currentAvaliador.id 
-        ? { ...av, nome: editForm.nome, email: editForm.email, telefone: editForm.telefone }
+        ? { ...av, nome: editForm.nome, email: editForm.email, telefone: editForm.telefone, status: editForm.status }
         : av
     );
     
@@ -257,8 +259,9 @@ const Avaliador = () => {
                               className="hover:text-primary"
                               onClick={() => handleOpenEdit(avaliador)}
                             >
-                              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M16.8754 11.6719C16.5379 11.6719 16.2285 11.9531 16.2285 12.3187V14.8219C16.2285 15.075 16.0316 15.2719 15.7785 15.2719H2.22227C1.96914 15.2719 1.77227 15.075 1.77227 14.8219V12.3187C1.77227 11.9812 1.49102 11.6719 1.12539 11.6719C0.759766 11.6719 0.478516 11.9531 0.478516 12.3187V14.8219C0.478516 15.7781 1.23789 16.5375 2.19414 16.5375H15.7785C16.7348 16.5375 17.4941 15.7781 17.4941 14.8219V12.3187C17.5223 11.9531 17.2129 11.6719 16.8754 11.6719Z" fill="currentColor" />
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
                             </button>
                             {/* Delete Button */}
@@ -402,31 +405,32 @@ const Avaliador = () => {
                 />
               </div>
               
-              {/* Campo Telefone */}
+              {/* Campo Telefone (Bloqueado - Unidade) */}
               <div className="mb-4.5">
                 <label className="mb-2.5 block text-black dark:text-white">
-                  Telefone
+                  Unidade
                 </label>
                 <input
                   type="text"
-                  placeholder="Telefone de contato"
-                  value={editForm.telefone}
-                  onChange={(e) => setEditForm({...editForm, telefone: e.target.value})}
-                  className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                  value={currentAvaliador.telefone}
+                  disabled
+                  className="w-full rounded border-[1.5px] border-stroke bg-gray-100 py-3 px-5 font-medium outline-none cursor-not-allowed text-gray-500 dark:border-form-strokedark dark:bg-gray-800 dark:text-gray-400"
                 />
               </div>
               
-              {/* Campo Unidade (Bloqueado) */}
+              {/* Campo Status (Editável) */}
               <div className="mb-6">
                 <label className="mb-2.5 block text-black dark:text-white">
                   Status
                 </label>
-                <input
-                  type="text"
-                  value={currentAvaliador.status}
-                  disabled
-                  className="w-full rounded border-[1.5px] border-stroke bg-gray-100 py-3 px-5 font-medium outline-none cursor-not-allowed text-gray-500 dark:border-form-strokedark dark:bg-gray-800 dark:text-gray-400"
-                />
+                <select
+                  value={editForm.status}
+                  onChange={(e) => setEditForm({...editForm, status: e.target.value as 'Ativo' | 'Inativo'})}
+                  className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                >
+                  <option value="Ativo">Ativo</option>
+                  <option value="Inativo">Inativo</option>
+                </select>
               </div>
             </>
           )}
