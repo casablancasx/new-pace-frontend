@@ -1,14 +1,38 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import { EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
+import { AuthService } from "../../services/authService";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const data = await AuthService.login(email, password);
+      AuthService.setToken(data.token);
+      AuthService.setUser(data.user);
+      navigate("/"); // or wherever the main app is
+    } catch (err) {
+      setError("Invalid credentials");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col flex-1">
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
@@ -22,13 +46,17 @@ export default function SignInForm() {
             </p>
           </div>
           <div>
-            <form>
+            <form onSubmit={handleSubmit}>
               <div className="space-y-6">
                 <div>
                   <Label>
                     Email <span className="text-error-500">*</span>{" "}
                   </Label>
-                  <Input placeholder="info@agu.gov.br" />
+                  <Input
+                    placeholder="info@agu.gov.br"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
                 <div>
                   <Label>
@@ -38,6 +66,8 @@ export default function SignInForm() {
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -51,6 +81,7 @@ export default function SignInForm() {
                     </span>
                   </div>
                 </div>
+                {error && <p className="text-error-500 text-sm">{error}</p>}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Checkbox checked={isChecked} onChange={setIsChecked} />
@@ -68,8 +99,12 @@ export default function SignInForm() {
                     </a>
                 </div>
                 <div>
-                  <Button className="w-full bg-brand-950 hover:bg-brand-900 text-white" size="sm">
-                    Sign in
+                  <Button
+                    className="w-full bg-brand-950 hover:bg-brand-900 text-white"
+                    size="sm"
+                    disabled={loading}
+                  >
+                    {loading ? "Entrando..." : "Entrar"}
                   </Button>
                 </div>
               </div>
