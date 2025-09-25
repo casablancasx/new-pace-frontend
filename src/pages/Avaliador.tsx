@@ -48,7 +48,7 @@ const Avaliador = () => {
       id: 1, 
       nome: 'João Silva', 
       email: 'joao.silva@email.com', 
-      especialidade: 'Cardiologia', 
+      especialidade: 'EEE', 
       telefone: '(11) 99999-9999', 
       status: 'Ativo' 
     },
@@ -56,7 +56,7 @@ const Avaliador = () => {
       id: 2, 
       nome: 'Maria Santos', 
       email: 'maria.santos@email.com', 
-      especialidade: 'Neurologia', 
+      especialidade: 'LLL', 
       telefone: '(11) 88888-8888', 
       status: 'Ativo' 
     },
@@ -64,7 +64,7 @@ const Avaliador = () => {
       id: 3, 
       nome: 'Dr. Pedro Costa', 
       email: 'pedro.costa@email.com', 
-      especialidade: 'Ortopedia', 
+      especialidade: 'PPPP', 
       telefone: '(11) 77777-7777', 
       status: 'Inativo' 
     },
