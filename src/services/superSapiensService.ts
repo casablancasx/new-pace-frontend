@@ -44,19 +44,24 @@ export class SuperSapiensService {
 
   static async cadastrarAvaliador(payload: CadastroAvaliadorPayload): Promise<any> {
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      throw new Error('Token de autenticação não encontrado');
+    }
     
     const response = await fetch(`${backendUrl}/avaliador`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // Adicionar token de autenticação se necessário
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
-      throw new Error(`Erro ao cadastrar avaliador: ${response.status}`);
+      const errorMessage = await response.text();
+      throw new Error(`Erro ao cadastrar avaliador: ${response.status} - ${errorMessage}`);
     }
 
     return response.json();

@@ -37,6 +37,7 @@ const Avaliador = () => {
   const [cadastroForm, setCadastroForm] = useState({
     nome: '',
     email: '',
+    cpf: '',
     telefone: '',
     setor: '',
     unidade: '',
@@ -128,6 +129,7 @@ const Avaliador = () => {
     setCadastroForm({
       nome: colaborador.colaborador.usuario.nome,
       email: colaborador.colaborador.usuario.email,
+      cpf: '',
       telefone: '',
       setor: colaborador.setor.nome,
       unidade: colaborador.setor.unidade?.nome || '',
@@ -142,10 +144,16 @@ const Avaliador = () => {
       const payload: CadastroAvaliadorPayload = {
         nome: cadastroForm.nome,
         email: cadastroForm.email,
+        cpf: cadastroForm.cpf || '',
         telefone: cadastroForm.telefone,
-        sapiensId: selectedColaborador.colaborador.usuario.id,
-        unidadeId: selectedColaborador.setor.unidade?.id || 0,
-        setorId: selectedColaborador.setor.id,
+        unidade: {
+          unidadeId: selectedColaborador.setor.unidade?.id || 0,
+          nome: selectedColaborador.setor.unidade?.nome || ''
+        },
+        setor: {
+          setorId: selectedColaborador.setor.id,
+          nome: selectedColaborador.setor.nome
+        }
       };
 
       await SuperSapiensService.cadastrarAvaliador(payload);
@@ -166,6 +174,7 @@ const Avaliador = () => {
       setCadastroForm({
         nome: '',
         email: '',
+        cpf: '',
         telefone: '',
         setor: '',
         unidade: '',
@@ -486,6 +495,7 @@ const Avaliador = () => {
                     setCadastroForm({
                       nome: '',
                       email: '',
+                      cpf: '',
                       telefone: '',
                       setor: '',
                       unidade: '',
@@ -519,6 +529,19 @@ const Avaliador = () => {
                     value={cadastroForm.email}
                     onChange={(e) => setCadastroForm(prev => ({ ...prev, email: e.target.value }))}
                     className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2.5 block text-black dark:text-white">
+                    CPF <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={cadastroForm.cpf}
+                    onChange={(e) => setCadastroForm(prev => ({ ...prev, cpf: e.target.value }))}
+                    className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                    placeholder="000.000.000-00"
                   />
                 </div>
 
@@ -572,7 +595,7 @@ const Avaliador = () => {
             <Button 
               variant="primary"
               onClick={handleCadastrar}
-              disabled={!selectedColaborador || !cadastroForm.nome.trim() || !cadastroForm.email.trim() || !cadastroForm.telefone.trim() || loading}
+              disabled={!selectedColaborador || !cadastroForm.nome.trim() || !cadastroForm.email.trim() || !cadastroForm.cpf.trim() || !cadastroForm.telefone.trim() || loading}
             >
               {loading ? "Cadastrando..." : "Cadastrar"}
             </Button>

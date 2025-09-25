@@ -105,8 +105,14 @@ export interface BuscarColaboradorParams {
 export interface CadastroAvaliadorPayload {
   nome: string;
   email: string;
+  cpf: string;
   telefone: string;
-  sapiensId: number;
-  unidadeId: number;
-  setorId: number;
+  unidade: {
+    unidadeId: number;
+    nome: string;
+  };
+  setor: {
+    setorId: number;
+    nome: string;
+  };
 }
