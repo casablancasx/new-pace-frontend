@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import PageMeta from "../components/common/PageMeta";
 import { useModal } from "../hooks/useModal";
+
 import { Modal } from "../components/ui/modal";
 import Button from "../components/ui/button/Button";
+import { SuperSapiensService } from "../services/superSapiensService";
+import { Lotacao, CadastroAvaliadorPayload } from "../types/superSapiens";
 
 // Interface para os dados dos avaliadores
 interface Avaliador {
@@ -26,6 +29,19 @@ const Avaliador = () => {
     telefone: '',
     status: 'Ativo' as 'Ativo' | 'Inativo',
   });
+
+  // Estados para o modal de cadastro
+  const [colaboradores, setColaboradores] = useState<Lotacao[]>([]);
+  const [selectedColaborador, setSelectedColaborador] = useState<Lotacao | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [cadastroForm, setCadastroForm] = useState({
+    nome: '',
+    email: '',
+    telefone: '',
+    setor: '',
+    unidade: '',
+  });
+
   const [avaliadores, setAvaliadores] = useState<Avaliador[]>([
     { 
       id: 1, 
@@ -70,21 +86,96 @@ const Avaliador = () => {
     // fetchAvaliadores();
   }, []);
 
-  const handleCadastrar = () => {
-    // Aqui seria feita a chamada para a API para cadastrar o avaliador
-    // Simulando uma adição ao estado local
-    const novoAvaliador: Avaliador = {
-      id: avaliadores.length + 1,
-      nome: `Dr. ${searchTerm}`,
-      email: `${searchTerm.toLowerCase().replace(' ', '.')}@email.com`,
-      especialidade: 'Nova Especialidade',
-      telefone: '(11) 00000-0000',
-      status: 'Ativo'
-    };
-    
-    setAvaliadores([...avaliadores, novoAvaliador]);
-    closeRegisterModal();
-    setSearchTerm("");
+  // Função para buscar colaboradores
+  const buscarColaboradores = async (nome: string) => {
+    if (nome.length < 2) {
+      setColaboradores([]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await SuperSapiensService.buscarColaborador({ nome });
+      setColaboradores(response.entities);
+    } catch (error) {
+      console.error('Erro ao buscar colaboradores:', error);
+      setColaboradores([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Função para lidar com o submit do formulário de busca
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      buscarColaboradores(searchTerm.trim());
+    }
+  };
+
+  // Função para lidar com tecla Enter
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (searchTerm.trim()) {
+        buscarColaboradores(searchTerm.trim());
+      }
+    }
+  };
+
+  const handleSelecionarColaborador = (colaborador: Lotacao) => {
+    setSelectedColaborador(colaborador);
+    setCadastroForm({
+      nome: colaborador.colaborador.usuario.nome,
+      email: colaborador.colaborador.usuario.email,
+      telefone: '',
+      setor: colaborador.setor.nome,
+      unidade: colaborador.setor.unidade?.nome || '',
+    });
+  };
+
+  const handleCadastrar = async () => {
+    if (!selectedColaborador) return;
+
+    try {
+      setLoading(true);
+      const payload: CadastroAvaliadorPayload = {
+        nome: cadastroForm.nome,
+        email: cadastroForm.email,
+        telefone: cadastroForm.telefone,
+        sapiensId: selectedColaborador.colaborador.usuario.id,
+        unidadeId: selectedColaborador.setor.unidade?.id || 0,
+        setorId: selectedColaborador.setor.id,
+      };
+
+      await SuperSapiensService.cadastrarAvaliador(payload);
+      
+      // Adicionar à lista local
+      const novoAvaliador: Avaliador = {
+        id: Date.now(),
+        nome: cadastroForm.nome,
+        email: cadastroForm.email,
+        especialidade: cadastroForm.setor,
+        telefone: cadastroForm.telefone,
+        status: 'Ativo'
+      };
+      
+      setAvaliadores([...avaliadores, novoAvaliador]);
+      setSearchTerm("");
+      setSelectedColaborador(null);
+      setCadastroForm({
+        nome: '',
+        email: '',
+        telefone: '',
+        setor: '',
+        unidade: '',
+      });
+      closeRegisterModal();
+    } catch (error) {
+      console.error('Erro ao cadastrar avaliador:', error);
+    } finally {
+      setLoading(false);
+    }
   };
   
   const handleOpenEdit = (avaliador: Avaliador) => {
@@ -299,45 +390,179 @@ const Avaliador = () => {
             Pesquisar Colaborador
           </h3>
           
-          <div className="mb-6">
-            <label className="mb-2.5 block text-black dark:text-white">
-              Nome do Colaborador
-            </label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2">
-                <svg
-                  className="fill-body hover:fill-primary dark:fill-bodydark dark:hover:fill-primary"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M9.16666 3.33332C5.945 3.33332 3.33332 5.945 3.33332 9.16666C3.33332 12.3883 5.945 15 9.16666 15C12.3883 15 15 12.3883 15 9.16666C15 5.945 12.3883 3.33332 9.16666 3.33332ZM1.66666 9.16666C1.66666 5.02452 5.02452 1.66666 9.16666 1.66666C13.3088 1.66666 16.6667 5.02452 16.6667 9.16666C16.6667 13.3088 13.3088 16.6667 9.16666 16.6667C5.02452 16.6667 1.66666 13.3088 1.66666 9.16666Z"
-                    fill="currentColor"
-                  />
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M13.2857 13.2857C13.6112 12.9603 14.1388 12.9603 14.4642 13.2857L18.0892 16.9107C18.4147 17.2362 18.4147 17.7638 18.0892 18.0892C17.7638 18.4147 17.2362 18.4147 16.9107 18.0892L13.2857 14.4642C12.9603 14.1388 12.9603 13.6112 13.2857 13.2857Z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </span>
-              <input
-                type="text"
-                placeholder="Digite o nome do colaborador..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 pl-12 pr-5 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-              />
-            </div>
-          </div>
+          {!selectedColaborador ? (
+            <>
+              <div className="mb-6">
+                <label className="mb-2.5 block text-black dark:text-white">
+                  Nome do Colaborador
+                </label>
+                <form onSubmit={handleSearchSubmit}>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2">
+                      <svg
+                        className="fill-body hover:fill-primary dark:fill-bodydark dark:hover:fill-primary"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          clipRule="evenodd"
+                          d="M9.16666 3.33332C5.945 3.33332 3.33332 5.945 3.33332 9.16666C3.33332 12.3883 5.945 15 9.16666 15C12.3883 15 15 12.3883 15 9.16666C15 5.945 12.3883 3.33332 9.16666 3.33332ZM1.66666 9.16666C1.66666 5.02452 5.02452 1.66666 9.16666 1.66666C13.3088 1.66666 16.6667 5.02452 16.6667 9.16666C16.6667 13.3088 13.3088 16.6667 9.16666 16.6667C5.02452 16.6667 1.66666 13.3088 1.66666 9.16666Z"
+                          fill="currentColor"
+                        />
+                        <path
+                          fillRule="evenodd"
+                          clipRule="evenodd"
+                          d="M13.2857 13.2857C13.6112 12.9603 14.1388 12.9603 14.4642 13.2857L18.0892 16.9107C18.4147 17.2362 18.4147 17.7638 18.0892 18.0892C17.7638 18.4147 17.2362 18.4147 16.9107 18.0892L13.2857 14.4642C12.9603 14.1388 12.9603 13.6112 13.2857 13.2857Z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="Digite o nome do colaborador e pressione Enter..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 pl-12 pr-5 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                    />
+                  </div>
+                </form>
+              </div>
 
-          <div className="flex justify-end gap-3">
+              {/* Lista de colaboradores encontrados */}
+              {loading && (
+                <div className="mb-4 text-center py-4">
+                  <p className="text-gray-500 dark:text-gray-400">Buscando colaboradores...</p>
+                </div>
+              )}
+
+              {colaboradores.length > 0 && (
+                <div className="mb-6 max-h-60 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                  <h4 className="px-4 py-3 text-sm font-medium text-black dark:text-white bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                    Consulta de Lotações
+                  </h4>
+                  <div className="">
+                    {colaboradores.map((lotacao) => (
+                      <div
+                        key={lotacao.id}
+                        onClick={() => handleSelecionarColaborador(lotacao)}
+                        className="p-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                      >
+                        <div className="font-semibold text-blue-600 dark:text-blue-400 text-sm mb-1">
+                          {lotacao.colaborador.usuario.nome}
+                        </div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                          <div className="flex flex-col">
+                            <span className="font-medium text-gray-800 dark:text-gray-300">
+                              {lotacao.setor.unidade?.nome}
+                            </span>
+                            <span className="text-gray-500 dark:text-gray-400">
+                              ({lotacao.setor.unidade?.sigla})
+                            </span>
+                          </div>
+                          <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-600">
+                            <span className="font-medium text-gray-800 dark:text-gray-300">
+                              {lotacao.setor.nome}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {/* Formulário de cadastro */}
+              <div className="mb-4">
+                <button
+                  onClick={() => {
+                    setSelectedColaborador(null);
+                    setCadastroForm({
+                      nome: '',
+                      email: '',
+                      telefone: '',
+                      setor: '',
+                      unidade: '',
+                    });
+                  }}
+                  className="text-sm text-blue-500 hover:text-blue-600 mb-4"
+                >
+                  ← Voltar para busca
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-2.5 block text-black dark:text-white">
+                    Nome <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={cadastroForm.nome}
+                    onChange={(e) => setCadastroForm(prev => ({ ...prev, nome: e.target.value }))}
+                    className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2.5 block text-black dark:text-white">
+                    Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={cadastroForm.email}
+                    onChange={(e) => setCadastroForm(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2.5 block text-black dark:text-white">
+                    Telefone <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    value={cadastroForm.telefone}
+                    onChange={(e) => setCadastroForm(prev => ({ ...prev, telefone: e.target.value }))}
+                    className="w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                    placeholder="(11) 99999-9999"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2.5 block text-black dark:text-white">
+                    Setor
+                  </label>
+                  <input
+                    type="text"
+                    value={cadastroForm.setor}
+                    disabled
+                    className="w-full rounded border-[1.5px] border-stroke bg-gray-100 py-3 px-5 font-medium outline-none transition disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2.5 block text-black dark:text-white">
+                    Unidade
+                  </label>
+                  <input
+                    type="text"
+                    value={cadastroForm.unidade}
+                    disabled
+                    className="w-full rounded border-[1.5px] border-stroke bg-gray-100 py-3 px-5 font-medium outline-none transition disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          <div className="flex justify-end gap-3 mt-5">
             <Button 
               variant="outline" 
               onClick={closeRegisterModal}
@@ -347,9 +572,9 @@ const Avaliador = () => {
             <Button 
               variant="primary"
               onClick={handleCadastrar}
-              disabled={!searchTerm.trim()}
+              disabled={!selectedColaborador || !cadastroForm.nome.trim() || !cadastroForm.email.trim() || !cadastroForm.telefone.trim() || loading}
             >
-              Cadastrar
+              {loading ? "Cadastrando..." : "Cadastrar"}
             </Button>
           </div>
         </div>
